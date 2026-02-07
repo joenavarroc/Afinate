@@ -3,6 +3,8 @@ const ctx = canvas.getContext("2d");
 const noteEl = document.getElementById("note");
 const statusEl = document.getElementById("status");
 const instrumentSel = document.getElementById("instrument");
+const startBtn = document.getElementById("start");
+const freqEl = document.getElementById("freq");
 
 const guitarNotes = [
  {note:"E",freq:82.41},{note:"A",freq:110},
@@ -15,6 +17,17 @@ const bassNotes = [
 ];
 
 let audioCtx, analyser, buffer;
+
+startBtn.addEventListener("click", async ()=>{
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+  analyser = audioCtx.createAnalyser();
+  const mic = audioCtx.createMediaStreamSource(stream);
+  mic.connect(analyser);
+  analyser.fftSize = 2048;
+  buffer = new Float32Array(analyser.fftSize);
+  update();
+});
 
 function drawDial(value){
   ctx.clearRect(0,0,320,180);
@@ -45,16 +58,6 @@ function drawDial(value){
   ctx.stroke();
 }
 
-navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
-  audioCtx=new AudioContext();
-  analyser=audioCtx.createAnalyser();
-  const mic=audioCtx.createMediaStreamSource(stream);
-  mic.connect(analyser);
-  analyser.fftSize=2048;
-  buffer=new Float32Array(analyser.fftSize);
-  update();
-});
-
 function autoCorrelate(buf,sampleRate){
   let SIZE=buf.length;
   let rms=0;
@@ -82,56 +85,17 @@ function closest(freq,list){
 
 function update(){
   analyser.getFloatTimeDomainData(buffer);
-  let freq=autoCorrelate(buffer,audioCtx.sampleRate);
-  if(freq!=-1){
-    let list=instrumentSel.value==="guitar"?guitarNotes:bassNotes;
-    let note=closest(freq,list);
-    let diff=freq-note.freq;
-
-    noteEl.textContent=note.note;
-    statusEl.textContent=Math.abs(diff)<1?"In tune":"Tuning";
-    drawDial(diff*10);
-  }
-  requestAnimationFrame(update);
-}
-
-document.getElementById("start").onclick = async ()=>{
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-  analyser = audioCtx.createAnalyser();
-  const mic = audioCtx.createMediaStreamSource(stream);
-  mic.connect(analyser);
-  analyser.fftSize = 2048;
-  buffer = new Float32Array(analyser.fftSize);
-  update();
-};
-
-function autoCorrelate(buf,sampleRate){
-  let SIZE=buf.length;
-  let rms=0;
-  for(let i=0;i<SIZE;i++) rms+=buf[i]*buf[i];
-  rms=Math.sqrt(rms/SIZE);
-  if(rms<0.01) return -1;
-
-  let c=new Array(SIZE).fill(0);
-  for(let i=0;i<SIZE;i++)
-    for(let j=0;j<SIZE-i;j++)
-      c[i]+=buf[j]*buf[j+i];
-
-  let d=0;
-  while(c[d]>c[d+1]) d++;
-  let maxval=-1,maxpos=-1;
-  for(let i=d;i<SIZE;i++){
-    if(c[i]>maxval){maxval=c[i];maxpos=i;}
-  }
-  return sampleRate/maxpos;
-}
-
-function update(){
-  analyser.getFloatTimeDomainData(buffer);
   let freq = autoCorrelate(buffer,audioCtx.sampleRate);
+
   if(freq!=-1){
-    document.getElementById("freq").textContent = freq.toFixed(1)+" Hz";
+    freqEl.textContent = freq.toFixed(1)+" Hz";
+    let list = instrumentSel.value==="guitar" ? guitarNotes : bassNotes;
+    let note = closest(freq,list);
+    let diff = freq-note.freq;
+
+    noteEl.textContent = note.note;
+    statusEl.textContent = Math.abs(diff)<1 ? "In tune" : "Tuning";
+    drawDial(diff*10);
   }
   requestAnimationFrame(update);
 }
