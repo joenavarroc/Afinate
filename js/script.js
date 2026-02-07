@@ -1,5 +1,6 @@
 console.log("JS OK");
 let blinkPhase = 0;
+let wasInTune = false;
 
 const canvas = document.getElementById("dial");
 const ctx = canvas.getContext("2d");
@@ -60,20 +61,22 @@ function drawDial(diff){
   ctx.clearRect(0,0,320,180);
 
   const cx = 160;
-  const cy = 120;
-  const spacing = 14;
+  const cy = 140;
+  const radius = 90;
 
-  let level = Math.round(diff / 2); 
+  let level = Math.round(diff / 2);
   level = Math.max(-7, Math.min(7, level));
 
-  blinkPhase += 0.1; // velocidad del parpadeo
-  let blink = (Math.sin(blinkPhase) + 1) / 2; // 0 → 1
+  blinkPhase += 0.1;
+  let blink = (Math.sin(blinkPhase) + 1) / 2;
 
   for(let i = -7; i <= 7; i++){
-    let x = cx + i * spacing;
-    let y = cy;
+    let angle = Math.PI + (i + 7) * (Math.PI / 14);
 
-    let color = "#333";
+    let x = cx + Math.cos(angle) * radius;
+    let y = cy + Math.sin(angle) * radius;
+
+    let color = "#222";
 
     if(i < 0) color = "red";
     if(i > 0) color = "red";
@@ -89,12 +92,14 @@ function drawDial(diff){
       ctx.fillStyle = "#222";
     }
 
-    // ⭐ PARPADEO cuando está afinado
+    // ⭐ parpadeo en afinado
     if(i === 0 && Math.abs(diff) < 2){
       ctx.fillStyle = `rgba(0,255,120,${0.2 + blink*0.8})`;
     }
 
-    ctx.fillRect(x-6, y-6, 12, 12);
+    ctx.beginPath();
+    ctx.arc(x, y, 6, 0, Math.PI*2);
+    ctx.fill();
   }
 }
 
@@ -142,8 +147,13 @@ function update(){
     else if(diff<-1) statusEl.textContent="Muy bajo (apretá)";
     else {
       statusEl.textContent="Afinado ✔";
+
+      if(!wasInTune && navigator.vibrate){
+        navigator.vibrate(80);
+      }
+      wasInTune = true;
     }
-    
+
     drawDial(diff);
   } else {
     // SIN SONIDO → dial apagado pero visible
@@ -155,4 +165,3 @@ function update(){
 
   requestAnimationFrame(update);
 }
-
