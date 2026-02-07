@@ -4,30 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Afinador</title>
-
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
 <div class="card">
-  <div class="canvas-wrap">
-    <canvas id="dial" width="320" height="180"></canvas>
-    <div class="note" id="note">--</div>
-  </div>
-  <div class="sub" id="status">In tune</div>
-  <select id="instrument">
-    <option value="guitar">🎸 Guitarra</option>
-    <option value="bass">🎸 Bajo</option>
-  </select>
+  <canvas id="dial" width="320" height="180"></canvas>
 
-  <h2>Test Micrófono</h2>
-    <button id="start">🎤 Activar micrófono</button>
-    <p id="freq">Esperando...</p>
+  <div class="note" id="note">--</div>
+  <div class="freq" id="freq">-- Hz</div>
+  <div class="status" id="status">Presiona activar</div>
+
+  <button id="start" class="mic-btn">🎤 Activar micrófono</button>
 </div>
 
-<script src="js/script.js" defer></script>
+<script src="js/scripts.js" defer></script>
 </body>
 </html>
+
+
 
 
 
