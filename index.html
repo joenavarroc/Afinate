@@ -9,21 +9,23 @@
 <body>
 
 <div class="card">
-  <canvas id="dial" width="320" height="180"></canvas>
+    <canvas id="dial" width="320" height="180"></canvas>
 
-  <div class="note" id="note">--</div>
-  <div class="freq" id="freq">-- Hz</div>
-  <div class="status" id="status">Presiona activar</div>
+    <select id="instrument" class="mic-btn">
+        <option value="guitar">🎸 Guitarra</option>
+        <option value="bass">🎸 Bajo</option>
+    </select>
 
-  <button id="start" class="mic-btn">🎤 Activar micrófono</button>
+    <div class="note" id="note">--</div>
+    <div class="freq" id="freq">-- Hz</div>
+    <div class="status" id="status">Presiona activar</div>
+
+    <button id="start" class="mic-btn">🎤 Activar micrófono</button>
 </div>
 
 <script src="js/script.js" defer></script>
 </body>
 </html>
-
-
-
 
 
 
