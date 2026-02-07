@@ -1,71 +1,107 @@
+const canvas = document.getElementById("dial");
+const ctx = canvas.getContext("2d");
 const noteEl = document.getElementById("note");
 const freqEl = document.getElementById("freq");
 const statusEl = document.getElementById("status");
 const startBtn = document.getElementById("start");
 
+const notes = [
+  {note:"E",freq:82.41},
+  {note:"A",freq:110},
+  {note:"D",freq:146.83},
+  {note:"G",freq:196},
+  {note:"B",freq:246.94},
+  {note:"E",freq:329.63}
+];
+
 let audioCtx, analyser, buffer;
 
-startBtn.addEventListener("click", async () => {
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+startBtn.onclick = async ()=>{
+  audioCtx = new AudioContext();
   await audioCtx.resume();
-
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  const source = audioCtx.createMediaStreamSource(stream);
-
+  const stream = await navigator.mediaDevices.getUserMedia({audio:true});
   analyser = audioCtx.createAnalyser();
   analyser.fftSize = 2048;
   buffer = new Float32Array(analyser.fftSize);
-
+  const source = audioCtx.createMediaStreamSource(stream);
   source.connect(analyser);
+  statusEl.textContent = "Escuchando...";
   update();
-});
+};
 
-function autoCorrelate(buf, sampleRate) {
-  let SIZE = buf.length;
-  let rms = 0;
-  for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
-  rms = Math.sqrt(rms / SIZE);
-  if (rms < 0.01) return -1;
+function drawDial(diff){
+  ctx.clearRect(0,0,320,180);
+  const cx=160, cy=150, r=110;
+  const start=Math.PI*0.9;
+  const end=Math.PI*2.1;
 
-  let r1 = 0, r2 = SIZE - 1;
-  for (let i = 0; i < SIZE / 2; i++) {
-    if (Math.abs(buf[i]) < 0.2) { r1 = i; break; }
-  }
-  for (let i = 1; i < SIZE / 2; i++) {
-    if (Math.abs(buf[SIZE - i]) < 0.2) { r2 = SIZE - i; break; }
-  }
-
-  buf = buf.slice(r1, r2);
-  SIZE = buf.length;
-
-  let c = new Array(SIZE).fill(0);
-  for (let i = 0; i < SIZE; i++)
-    for (let j = 0; j < SIZE - i; j++)
-      c[i] += buf[j] * buf[j + i];
-
-  let d = 0;
-  while (c[d] > c[d + 1]) d++;
-
-  let maxval = -1, maxpos = -1;
-  for (let i = d; i < SIZE; i++) {
-    if (c[i] > maxval) {
-      maxval = c[i];
-      maxpos = i;
-    }
+  for(let i=0;i<15;i++){
+    let t=i/14;
+    let a=start+t*(end-start);
+    let x=cx+Math.cos(a)*r;
+    let y=cy+Math.sin(a)*r;
+    let col=t<0.4?"red":t<0.6?"lime":"red";
+    ctx.fillStyle=col;
+    ctx.beginPath();
+    ctx.arc(x,y,6,0,Math.PI*2);
+    ctx.fill();
   }
 
-  return sampleRate / maxpos;
+  let angle=start+(diff+50)/100*(end-start);
+  ctx.strokeStyle="white";
+  ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.moveTo(cx,cy);
+  ctx.lineTo(cx+Math.cos(angle)*r,cy+Math.sin(angle)*r);
+  ctx.stroke();
 }
 
-function update() {
-  analyser.getFloatTimeDomainData(buffer);
-  let freq = autoCorrelate(buffer, audioCtx.sampleRate);
+function autoCorrelate(buf,sr){
+  let SIZE=buf.length;
+  let rms=0;
+  for(let i=0;i<SIZE;i++) rms+=buf[i]*buf[i];
+  rms=Math.sqrt(rms/SIZE);
+  if(rms<0.01) return -1;
 
-  if (freq !== -1) {
-    freqEl.textContent = freq.toFixed(1) + " Hz";
-    noteEl.textContent = "🎵";
-    statusEl.textContent = "Detectando...";
+  let c=new Array(SIZE).fill(0);
+  for(let i=0;i<SIZE;i++)
+    for(let j=0;j<SIZE-i;j++)
+      c[i]+=buf[j]*buf[j+i];
+
+  let d=0;
+  while(c[d]>c[d+1]) d++;
+
+  let max=-1,pos=-1;
+  for(let i=d;i<SIZE;i++){
+    if(c[i]>max){max=c[i];pos=i;}
+  }
+  return sr/pos;
+}
+
+function closest(freq){
+  return notes.reduce((a,b)=>
+    Math.abs(freq-a.freq)<Math.abs(freq-b.freq)?a:b
+  );
+}
+
+function update(){
+  analyser.getFloatTimeDomainData(buffer);
+  let freq=autoCorrelate(buffer,audioCtx.sampleRate);
+
+  if(freq!=-1){
+    let n=closest(freq);
+    let diff=freq-n.freq;
+
+    noteEl.textContent=n.note;
+    freqEl.textContent=freq.toFixed(1)+" Hz";
+
+    if(diff>1) statusEl.textContent="Muy alto (aflojá)";
+    else if(diff<-1) statusEl.textContent="Muy bajo (apretá)";
+    else statusEl.textContent="Afinado ✔";
+
+    drawDial(diff*10);
   }
 
   requestAnimationFrame(update);
 }
+
