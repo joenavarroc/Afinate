@@ -1,3 +1,5 @@
+console.log("JS OK");
+
 const canvas = document.getElementById("dial");
 const ctx = canvas.getContext("2d");
 const noteEl = document.getElementById("note");
@@ -34,7 +36,6 @@ function drawDial(diff){
 
   const cx = 160;
   const cy = 120;
-  const leds = 15;
   const spacing = 14;
 
   let level = Math.round(diff / 2); 
@@ -44,7 +45,7 @@ function drawDial(diff){
     let x = cx + i * spacing;
     let y = cy;
 
-    let color = "#444";
+    let color = "#222";
 
     if(i < 0) color = "red";
     if(i > 0) color = "red";
@@ -57,12 +58,11 @@ function drawDial(diff){
     ){
       ctx.fillStyle = color;
     } else {
-      ctx.fillStyle = "#222";
+      ctx.fillStyle = "#333";
     }
 
-    ctx.beginPath();
-    ctx.roundRect(x-6,y-6,12,12,3);
-    ctx.fill();
+    // LED cuadrado simple (compatible con todos)
+    ctx.fillRect(x-6, y-6, 12, 12);
   }
 }
 
@@ -120,9 +120,3 @@ function update(){
 
   requestAnimationFrame(update);
 }
-
-
-  requestAnimationFrame(update);
-}
-
-
