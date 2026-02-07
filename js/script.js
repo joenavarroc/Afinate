@@ -6,6 +6,22 @@ const noteEl = document.getElementById("note");
 const freqEl = document.getElementById("freq");
 const statusEl = document.getElementById("status");
 const startBtn = document.getElementById("start");
+const guitarBtn = document.getElementById("guitarBtn");
+const bassBtn = document.getElementById("bassBtn");
+
+let mode = "guitar";
+
+guitarBtn.onclick = ()=>{
+  mode = "guitar";
+  guitarBtn.classList.add("active");
+  bassBtn.classList.remove("active");
+};
+
+bassBtn.onclick = ()=>{
+  mode = "bass";
+  bassBtn.classList.add("active");
+  guitarBtn.classList.remove("active");
+};
 
 const guitarNotes = [
   {note:"E",freq:82.41},
@@ -18,19 +34,10 @@ const guitarNotes = [
 
 const bassNotes = [
   {note:"E",freq:41.20},
-  {note:"A",freq:55.00},
+  {note:"A",freq:55},
   {note:"D",freq:73.42},
-  {note:"G",freq:98.00}
+  {note:"G",freq:98}
 ];
-
-let notes = guitarNotes;
-
-const instrumentSelect = document.getElementById("instrument");
-
-instrumentSelect.onchange = () => {
-  notes = instrumentSelect.value === "bass" ? bassNotes : guitarNotes;
-};
-
 
 let audioCtx, analyser, buffer;
 
@@ -105,7 +112,8 @@ function autoCorrelate(buf,sr){
 }
 
 function closest(freq){
-  return notes.reduce((a,b)=>
+  const list = mode === "bass" ? bassNotes : guitarNotes;
+  return list.reduce((a,b)=>
     Math.abs(freq-a.freq)<Math.abs(freq-b.freq)?a:b
   );
 }
