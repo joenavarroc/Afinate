@@ -46,15 +46,36 @@ const bassNotes = [
 let audioCtx, analyser, buffer;
 drawDial(0);
 
-startBtn.onclick = async ()=>{
+startBtn.onclick = async () => {
   audioCtx = new AudioContext();
   await audioCtx.resume();
-  const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+  const stream = await navigator.mediaDevices.getUserMedia({ 
+    audio: {
+      echoCancellation: false,
+      noiseSuppression: false, // Importante para no filtrar las notas bajas
+      autoGainControl: false
+    } 
+  });
+  
   analyser = audioCtx.createAnalyser();
-  analyser.fftSize = 2048;
+  // Aumentamos a 8192 para captar ondas largas de bajo
+  analyser.fftSize = 8192; 
+  
   buffer = new Float32Array(analyser.fftSize);
   const source = audioCtx.createMediaStreamSource(stream);
-  source.connect(analyser);
+  
+  // Opcional: Crear un filtro para el modo bajo
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.value = 400; // Corta lo que no sea bajo
+  
+  if(mode === "bass") {
+    source.connect(filter);
+    filter.connect(analyser);
+  } else {
+    source.connect(analyser);
+  }
+  
   statusEl.textContent = "Escuchando...";
   update();
 };
@@ -192,5 +213,6 @@ function update(){
 
   requestAnimationFrame(update);
 }
+
 
 
