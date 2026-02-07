@@ -1,4 +1,5 @@
 console.log("JS OK");
+let blinkPhase = 0;
 
 const canvas = document.getElementById("dial");
 const ctx = canvas.getContext("2d");
@@ -40,6 +41,7 @@ const bassNotes = [
 ];
 
 let audioCtx, analyser, buffer;
+drawDial(0);
 
 startBtn.onclick = async ()=>{
   audioCtx = new AudioContext();
@@ -64,11 +66,14 @@ function drawDial(diff){
   let level = Math.round(diff / 2); 
   level = Math.max(-7, Math.min(7, level));
 
+  blinkPhase += 0.1; // velocidad del parpadeo
+  let blink = (Math.sin(blinkPhase) + 1) / 2; // 0 → 1
+
   for(let i = -7; i <= 7; i++){
     let x = cx + i * spacing;
     let y = cy;
 
-    let color = "#222";
+    let color = "#333";
 
     if(i < 0) color = "red";
     if(i > 0) color = "red";
@@ -81,10 +86,14 @@ function drawDial(diff){
     ){
       ctx.fillStyle = color;
     } else {
-      ctx.fillStyle = "#333";
+      ctx.fillStyle = "#222";
     }
 
-    // LED cuadrado simple (compatible con todos)
+    // ⭐ PARPADEO cuando está afinado
+    if(i === 0 && Math.abs(diff) < 2){
+      ctx.fillStyle = `rgba(0,255,120,${0.2 + blink*0.8})`;
+    }
+
     ctx.fillRect(x-6, y-6, 12, 12);
   }
 }
@@ -122,13 +131,7 @@ function update(){
   analyser.getFloatTimeDomainData(buffer);
   let freq=autoCorrelate(buffer,audioCtx.sampleRate);
 
-  if(freq!=-1){
-      let sum = 0;
-  for(let i=0;i<buffer.length;i++){
-    sum += Math.abs(buffer[i]);
-  }
-  let volume = sum / buffer.length;
-
+  if(freq !== -1){
     let n=closest(freq);
     let diff=freq-n.freq;
 
@@ -137,10 +140,19 @@ function update(){
 
     if(diff>1) statusEl.textContent="Muy alto (aflojá)";
     else if(diff<-1) statusEl.textContent="Muy bajo (apretá)";
-    else statusEl.textContent="Afinado ✔";
-
+    else {
+      statusEl.textContent="Afinado ✔";
+    }
+    
     drawDial(diff);
+  } else {
+    // SIN SONIDO → dial apagado pero visible
+    noteEl.textContent="--";
+    freqEl.textContent="-- Hz";
+    statusEl.textContent="Esperando sonido...";
+    drawDial(0);
   }
 
   requestAnimationFrame(update);
 }
+
