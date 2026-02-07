@@ -103,8 +103,8 @@ function drawDial(diff){
   }
     // 🎵 letras de las cuerdas arriba del arco
     const notes = mode === "bass"
-      ? ["E", "A", "D", "G"]
-      : ["E", "A", "D", "G", "B", "E"];
+      ? ["E1", "A1", "D2", "G2"]
+      : ["E2", "A2", "D3", "G3", "B3", "4E"];
   
     ctx.font = "14px Arial";
     ctx.textAlign = "center";
@@ -182,4 +182,5 @@ function update(){
 
   requestAnimationFrame(update);
 }
+
 
