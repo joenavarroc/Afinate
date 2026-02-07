@@ -31,29 +31,39 @@ startBtn.onclick = async ()=>{
 
 function drawDial(diff){
   ctx.clearRect(0,0,320,180);
-  const cx=160, cy=150, r=110;
-  const start=Math.PI*0.9;
-  const end=Math.PI*2.1;
 
-  for(let i=0;i<15;i++){
-    let t=i/14;
-    let a=start+t*(end-start);
-    let x=cx+Math.cos(a)*r;
-    let y=cy+Math.sin(a)*r;
-    let col=t<0.4?"red":t<0.6?"lime":"red";
-    ctx.fillStyle=col;
+  const cx = 160;
+  const cy = 120;
+  const leds = 15;
+  const spacing = 14;
+
+  let level = Math.round(diff / 2); 
+  level = Math.max(-7, Math.min(7, level));
+
+  for(let i = -7; i <= 7; i++){
+    let x = cx + i * spacing;
+    let y = cy;
+
+    let color = "#444";
+
+    if(i < 0) color = "red";
+    if(i > 0) color = "red";
+    if(i === 0) color = "lime";
+
+    if(
+      (level < 0 && i >= level && i < 0) ||
+      (level > 0 && i <= level && i > 0) ||
+      (level === 0 && i === 0)
+    ){
+      ctx.fillStyle = color;
+    } else {
+      ctx.fillStyle = "#222";
+    }
+
     ctx.beginPath();
-    ctx.arc(x,y,6,0,Math.PI*2);
+    ctx.roundRect(x-6,y-6,12,12,3);
     ctx.fill();
   }
-
-  let angle=start+(diff+50)/100*(end-start);
-  ctx.strokeStyle="white";
-  ctx.lineWidth=3;
-  ctx.beginPath();
-  ctx.moveTo(cx,cy);
-  ctx.lineTo(cx+Math.cos(angle)*r,cy+Math.sin(angle)*r);
-  ctx.stroke();
 }
 
 function autoCorrelate(buf,sr){
@@ -89,6 +99,12 @@ function update(){
   let freq=autoCorrelate(buffer,audioCtx.sampleRate);
 
   if(freq!=-1){
+      let sum = 0;
+  for(let i=0;i<buffer.length;i++){
+    sum += Math.abs(buffer[i]);
+  }
+  let volume = sum / buffer.length;
+
     let n=closest(freq);
     let diff=freq-n.freq;
 
@@ -99,9 +115,14 @@ function update(){
     else if(diff<-1) statusEl.textContent="Muy bajo (apretá)";
     else statusEl.textContent="Afinado ✔";
 
-    drawDial(diff*10);
+    drawDial(diff);
   }
 
   requestAnimationFrame(update);
 }
+
+
+  requestAnimationFrame(update);
+}
+
 
