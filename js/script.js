@@ -17,12 +17,14 @@ guitarBtn.onclick = ()=>{
   mode = "guitar";
   guitarBtn.classList.add("active");
   bassBtn.classList.remove("active");
+  drawDial(0); // 👈 REDIBUJA
 };
 
 bassBtn.onclick = ()=>{
   mode = "bass";
   bassBtn.classList.add("active");
   guitarBtn.classList.remove("active");
+  drawDial(0); // 👈 REDIBUJA
 };
 
 const guitarNotes = [
@@ -101,21 +103,22 @@ function drawDial(diff){
     ctx.arc(x, y, 6, 0, Math.PI*2);
     ctx.fill();
   }
+
     // 🎵 letras de las cuerdas arriba del arco
     const notes = mode === "bass"
       ? ["E1", "A1", "D2", "G2"]
-      : ["E2", "A2", "D3", "G3", "B3", "4E"];
-  
+      : ["E2", "A2", "D3", "G3", "B3", "E4"];
+
     ctx.font = "14px Arial";
     ctx.textAlign = "center";
     ctx.fillStyle = "#aaa";
-  
+
     let count = notes.length;
     for(let i = 0; i < count; i++){
       let angle = Math.PI + (i * (Math.PI / (count - 1)));
       let x = cx + Math.cos(angle) * (radius + 20);
       let y = cy + Math.sin(angle) * (radius + 20);
-  
+
       ctx.fillText(notes[i], x, y);
     }
 }
@@ -151,32 +154,39 @@ function closest(freq){
 
 function update(){
   analyser.getFloatTimeDomainData(buffer);
-  let freq=autoCorrelate(buffer,audioCtx.sampleRate);
+  let freq = autoCorrelate(buffer,audioCtx.sampleRate);
 
   if(freq !== -1){
-    let n=closest(freq);
-    let diff=freq-n.freq;
+    let n = closest(freq);
+    let diff = freq - n.freq;
 
-    noteEl.textContent=n.note;
-    freqEl.textContent=freq.toFixed(1)+" Hz";
+    noteEl.textContent = n.note;
+    freqEl.textContent = freq.toFixed(1) + " Hz";
 
-    if(diff>1) statusEl.textContent="Muy alto (aflojá)";
-    else if(diff<-1) statusEl.textContent="Muy bajo (apretá)";
-    else {
-      statusEl.textContent="Afinado ✔";
+    if(diff > 1){
+      statusEl.textContent = "Muy alto (aflojá)";
+      wasInTune = false; // 👈 importante
+    }
+    else if(diff < -1){
+      statusEl.textContent = "Muy bajo (apretá)";
+      wasInTune = false; // 👈 importante
+    }
+    else{
+      statusEl.textContent = "Afinado ✔";
 
       if(!wasInTune && navigator.vibrate){
-        navigator.vibrate(80);
+        navigator.vibrate(100); // 📳 vibra al entrar en afinado
       }
       wasInTune = true;
     }
 
     drawDial(diff);
-  } else {
-    // SIN SONIDO → dial apagado pero visible
+  } 
+  else {
     noteEl.textContent="--";
     freqEl.textContent="-- Hz";
     statusEl.textContent="Esperando sonido...";
+    wasInTune = false; // 👈 también reset acá
     drawDial(0);
   }
 
