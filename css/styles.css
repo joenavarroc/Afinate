@@ -16,11 +16,16 @@ body{
   padding:20px;
   text-align:center;
   box-shadow:0 0 40px rgba(0,0,0,.6);
+
+  display: flex;              
+  flex-direction: column;     
+  align-items: center;        
+  gap: 8px;    
 }
 
 .note{
   font-size:64px;
-  margin-top:-40px;
+  margin-top:0px;
 }
 
 .freq{
@@ -48,4 +53,29 @@ body{
 canvas{
   width:100%;
   height:160px;
+}
+
+.instrument-switch{
+  display:flex;
+  gap:10px;
+  margin-top:12px;
+}
+
+.inst-btn{
+  flex:1;
+  padding:10px 0;
+  border-radius:20px;
+  border:none;
+  background:#222;
+  color:white;
+  font-size:14px;
+  cursor:pointer;
+  transition:.25s;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.1);
+}
+
+.inst-btn.active{
+  background:linear-gradient(135deg,#3fa9f5,#00f2a9);
+  color:black;
+  box-shadow:0 0 15px rgba(0,255,180,.6);
 }
