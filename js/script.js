@@ -144,40 +144,26 @@ function drawDial(diff){
     }
 }
 
-function autoCorrelate(buf, sr) {
-  let SIZE = buf.length;
-  let rms = 0;
-  for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
-  rms = Math.sqrt(rms / SIZE);
-  
-  // Umbral de silencio: si es muy bajo, no procesar
-  if (rms < 0.01) return -1;
+function autoCorrelate(buf,sr){
+  let SIZE=buf.length;
+  let rms=0;
+  for(let i=0;i<SIZE;i++) rms+=buf[i]*buf[i];
+  rms=Math.sqrt(rms/SIZE);
+  if(rms<0.01) return -1;
 
-  // Algoritmo de Diferencia de Magnitud Promedio (AMDF)
-  // Es más estable para bajos que la autocorrelación simple
-  let searchRange = SIZE / 2;
-  let prevDiff = 0;
-  let bestDist = Infinity;
-  let bestPos = -1;
+  let c=new Array(SIZE).fill(0);
+  for(let i=0;i<SIZE;i++)
+    for(let j=0;j<SIZE-i;j++)
+      c[i]+=buf[j]*buf[j+i];
 
-  for (let tau = 20; tau < searchRange; tau++) { // Empezamos en 20 para ignorar ruidos ultra agudos
-    let diff = 0;
-    for (let j = 0; j < searchRange; j++) {
-      diff += Math.abs(buf[j] - buf[j + tau]);
-    }
+  let d=0;
+  while(c[d]>c[d+1]) d++;
 
-    if (diff < bestDist) {
-      bestDist = diff;
-      bestPos = tau;
-    }
-    
-    // Si la diferencia es muy pequeña, ya encontramos la nota fundamental
-    if (diff < 0.05) break; 
+  let max=-1,pos=-1;
+  for(let i=d;i<SIZE;i++){
+    if(c[i]>max){max=c[i];pos=i;}
   }
-
-  if (bestPos === -1) return -1;
-  
-  return sr / bestPos;
+  return sr/pos;
 }
 
 function closest(freq){
@@ -187,55 +173,43 @@ function closest(freq){
   );
 }
 
-function update() {
+function update(){
   analyser.getFloatTimeDomainData(buffer);
-  let freq = autoCorrelate(buffer, audioCtx.sampleRate);
+  let freq = autoCorrelate(buffer,audioCtx.sampleRate);
 
-  if (freq !== -1) {
+  if(freq !== -1){
     let n = closest(freq);
     let diff = freq - n.freq;
-
-    // --- APLICAMOS EL SUAVIZADO ---
-    // El valor 0.8 hace que el movimiento sea estable. 
-    // Si quieres que sea más rápido, usa 0.7. Si quieres más estable, 0.9.
-    smoothedDiff = (smoothedDiff * 0.8) + (diff * 0.2);
 
     noteEl.textContent = n.note;
     freqEl.textContent = freq.toFixed(1) + " Hz";
 
-    // Usamos 'diff' para los textos (reacción inmediata)
-    if (diff > 1) {
+    if(diff > 1){
       statusEl.textContent = "Muy alto (aflojá)";
-      wasInTune = false;
-    } 
-    else if (diff < -1) {
+      wasInTune = false; // 👈 importante
+    }
+    else if(diff < -1){
       statusEl.textContent = "Muy bajo (apretá)";
-      wasInTune = false;
-    } 
-    else {
+      wasInTune = false; // 👈 importante
+    }
+    else{
       statusEl.textContent = "Afinado ✔";
-      if (!wasInTune && navigator.vibrate) {
-        navigator.vibrate(100);
+
+      if(!wasInTune && navigator.vibrate){
+        navigator.vibrate(100); // 📳 vibra al entrar en afinado
       }
       wasInTune = true;
     }
 
-    // Usamos 'smoothedDiff' para el dibujo (movimiento fluido)
-    drawDial(smoothedDiff);
-
-  } else {
-    // Si no hay sonido, reseteamos valores
-    noteEl.textContent = "--";
-    freqEl.textContent = "-- Hz";
-    statusEl.textContent = "Esperando sonido...";
-    wasInTune = false;
-    smoothedDiff = 0; // Reset del suavizado
+    drawDial(diff);
+  } 
+  else {
+    noteEl.textContent="--";
+    freqEl.textContent="-- Hz";
+    statusEl.textContent="Esperando sonido...";
+    wasInTune = false; // 👈 también reset acá
     drawDial(0);
   }
 
   requestAnimationFrame(update);
 }
-
-
-
-
