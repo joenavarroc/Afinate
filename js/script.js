@@ -7,7 +7,7 @@ const freqEl = document.getElementById("freq");
 const statusEl = document.getElementById("status");
 const startBtn = document.getElementById("start");
 
-const notes = [
+const guitarNotes = [
   {note:"E",freq:82.41},
   {note:"A",freq:110},
   {note:"D",freq:146.83},
@@ -15,6 +15,22 @@ const notes = [
   {note:"B",freq:246.94},
   {note:"E",freq:329.63}
 ];
+
+const bassNotes = [
+  {note:"E",freq:41.20},
+  {note:"A",freq:55.00},
+  {note:"D",freq:73.42},
+  {note:"G",freq:98.00}
+];
+
+let notes = guitarNotes;
+
+const instrumentSelect = document.getElementById("instrument");
+
+instrumentSelect.onchange = () => {
+  notes = instrumentSelect.value === "bass" ? bassNotes : guitarNotes;
+};
+
 
 let audioCtx, analyser, buffer;
 
