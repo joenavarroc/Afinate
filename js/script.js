@@ -101,6 +101,23 @@ function drawDial(diff){
     ctx.arc(x, y, 6, 0, Math.PI*2);
     ctx.fill();
   }
+    // 🎵 letras de las cuerdas arriba del arco
+    const notes = mode === "bass"
+      ? ["E", "A", "D", "G"]
+      : ["E", "A", "D", "G", "B", "E"];
+  
+    ctx.font = "14px Arial";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#aaa";
+  
+    let count = notes.length;
+    for(let i = 0; i < count; i++){
+      let angle = Math.PI + (i * (Math.PI / (count - 1)));
+      let x = cx + Math.cos(angle) * (radius + 20);
+      let y = cy + Math.sin(angle) * (radius + 20);
+  
+      ctx.fillText(notes[i], x, y);
+    }
 }
 
 function autoCorrelate(buf,sr){
@@ -165,3 +182,4 @@ function update(){
 
   requestAnimationFrame(update);
 }
+
